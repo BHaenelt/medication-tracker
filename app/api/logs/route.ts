@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connect } from '@/lib/dbConfig';
 import MedicationLog from '@/models/MedicationLog';
+import Medication from '@/models/Medication';
 import { verifyToken, unauthorizedResponse } from '../middleware/auth';
 
 // GET all logs for authenticated user
 export async function GET(request: NextRequest) {
   try {
-    const userId = verifyToken(request);
+    const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
     await connect();
+    
+    // Force Medication model to load
+    await Medication.init();
 
     const logs = await MedicationLog.find({ userId })
       .populate('medicationId', 'name dosage')
@@ -31,10 +35,13 @@ export async function GET(request: NextRequest) {
 // POST create new log
 export async function POST(request: NextRequest) {
   try {
-    const userId = verifyToken(request);
+    const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
     await connect();
+    
+    // Force Medication model to load
+    await Medication.init();
 
     const body = await request.json();
     const { medicationId, scheduledTime, takenAt, status, notes } = body;

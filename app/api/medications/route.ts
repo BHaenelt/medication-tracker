@@ -6,17 +6,15 @@ import { verifyToken, unauthorizedResponse } from '../middleware/auth';
 // GET all medications for logged-in user
 export async function GET(request: NextRequest) {
   try {
-    // Verify token and get userId
-    const auth = await verifyToken(request);
-    if (!auth) {
+    const userId = await verifyToken(request);
+    if (!userId) {
       return unauthorizedResponse();
     }
 
     await connect();
     
-    // Get only this user's active medications
     const medications = await Medication.find({ 
-      userId: auth.userId, 
+      userId: userId, 
       isActive: true 
     }).sort({ createdAt: -1 });
     
@@ -36,9 +34,8 @@ export async function GET(request: NextRequest) {
 // POST - Create a new medication for logged-in user
 export async function POST(request: NextRequest) {
   try {
-    // Verify token and get userId
-    const auth = await verifyToken(request);
-    if (!auth) {
+    const userId = await verifyToken(request);
+    if (!userId) {
       return unauthorizedResponse();
     }
 
@@ -54,9 +51,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Create medication with logged-in user's ID
     const medication = await Medication.create({
-      userId: auth.userId,  // Use userId from token
+      userId: userId,
       name,
       dosage,
       frequency,

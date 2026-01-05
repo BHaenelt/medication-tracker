@@ -9,35 +9,33 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await verifyToken(request);
-    if (!auth) {
-      return unauthorizedResponse();
-    }
+    const userId = await verifyToken(request);
+    if (!userId) return unauthorizedResponse();
 
     await connect();
-    
-    const medication = await Medication.findOne({
-      _id: params.id,
-      userId: auth.userId // Only get if it belongs to this user
+
+    const medication = await Medication.findOne({ 
+      _id: params.id, 
+      userId: userId 
     });
-    
+
     if (!medication) {
-      return NextResponse.json(
-        { error: 'Medication not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Medication not found' 
+      }, { status: 404 });
     }
-    
-    return NextResponse.json({
-      success: true,
-      data: medication
-    });
-    
+
+    return NextResponse.json({ 
+      success: true, 
+      data: medication 
+    }, { status: 200 });
+
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -47,41 +45,36 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await verifyToken(request);
-    if (!auth) {
-      return unauthorizedResponse();
-    }
+    const userId = await verifyToken(request);
+    if (!userId) return unauthorizedResponse();
 
     await connect();
-    
+
     const body = await request.json();
-    
+
     const medication = await Medication.findOneAndUpdate(
-      {
-        _id: params.id,
-        userId: auth.userId // Only update if it belongs to this user
-      },
+      { _id: params.id, userId: userId },
       body,
       { new: true, runValidators: true }
     );
-    
+
     if (!medication) {
-      return NextResponse.json(
-        { error: 'Medication not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Medication not found' 
+      }, { status: 404 });
     }
-    
-    return NextResponse.json({
-      success: true,
-      data: medication
-    });
-    
+
+    return NextResponse.json({ 
+      success: true, 
+      data: medication 
+    }, { status: 200 });
+
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -91,34 +84,32 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const auth = await verifyToken(request);
-    if (!auth) {
-      return unauthorizedResponse();
-    }
+    const userId = await verifyToken(request);
+    if (!userId) return unauthorizedResponse();
 
     await connect();
-    
-    const medication = await Medication.findOneAndDelete({
-      _id: params.id,
-      userId: auth.userId // Only delete if it belongs to this user
+
+    const medication = await Medication.findOneAndDelete({ 
+      _id: params.id, 
+      userId: userId 
     });
-    
+
     if (!medication) {
-      return NextResponse.json(
-        { error: 'Medication not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Medication not found' 
+      }, { status: 404 });
     }
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Medication deleted successfully'
-    });
-    
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Medication deleted successfully' 
+    }, { status: 200 });
+
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 });
   }
 }

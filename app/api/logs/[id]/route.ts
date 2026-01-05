@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connect } from '@/lib/dbConfig';
 import MedicationLog from '@/models/MedicationLog';
+import Medication from '@/models/Medication';
 import { verifyToken, unauthorizedResponse } from '../../middleware/auth';
 
 // GET single log
@@ -9,14 +10,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = verifyToken(request);
+    const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
     await connect();
 
     const log = await MedicationLog.findOne({ 
       _id: params.id, 
-      userId 
+      userId: userId 
     }).populate('medicationId', 'name dosage');
 
     if (!log) {
@@ -45,7 +46,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = verifyToken(request);
+    const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
     await connect();
@@ -54,7 +55,7 @@ export async function PUT(
     const { takenAt, status, notes } = body;
 
     const log = await MedicationLog.findOneAndUpdate(
-      { _id: params.id, userId },
+      { _id: params.id, userId: userId },
       { takenAt, status, notes },
       { new: true, runValidators: true }
     ).populate('medicationId', 'name dosage');
@@ -85,14 +86,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const userId = verifyToken(request);
+    const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
     await connect();
 
     const log = await MedicationLog.findOneAndDelete({ 
       _id: params.id, 
-      userId 
+      userId: userId 
     });
 
     if (!log) {
