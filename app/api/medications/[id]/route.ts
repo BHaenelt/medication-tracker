@@ -1,26 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connect } from '@/lib/dbConfig';
 import Medication from '@/models/Medication';
-import mongoose from 'mongoose';
+import { verifyToken, unauthorizedResponse } from '../../middleware/auth';
 
-// GET single medication by ID
+// GET single medication
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await verifyToken(request);
+    if (!auth) {
+      return unauthorizedResponse();
+    }
+
     await connect();
     
-    const { id } = params;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid medication ID' },
-        { status: 400 }
-      );
-    }
-    
-    const medication = await Medication.findById(id);
+    const medication = await Medication.findOne({
+      _id: params.id,
+      userId: auth.userId // Only get if it belongs to this user
+    });
     
     if (!medication) {
       return NextResponse.json(
@@ -42,27 +41,27 @@ export async function GET(
   }
 }
 
-// PUT - Update medication
+// PUT update medication
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await verifyToken(request);
+    if (!auth) {
+      return unauthorizedResponse();
+    }
+
     await connect();
     
-    const { id } = params;
     const body = await request.json();
     
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid medication ID' },
-        { status: 400 }
-      );
-    }
-    
-    const medication = await Medication.findByIdAndUpdate(
-      id,
-      { $set: body },
+    const medication = await Medication.findOneAndUpdate(
+      {
+        _id: params.id,
+        userId: auth.userId // Only update if it belongs to this user
+      },
+      body,
       { new: true, runValidators: true }
     );
     
@@ -86,28 +85,23 @@ export async function PUT(
   }
 }
 
-// DELETE - Soft delete (set isActive to false)
+// DELETE medication
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const auth = await verifyToken(request);
+    if (!auth) {
+      return unauthorizedResponse();
+    }
+
     await connect();
     
-    const { id } = params;
-    
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid medication ID' },
-        { status: 400 }
-      );
-    }
-    
-    const medication = await Medication.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    );
+    const medication = await Medication.findOneAndDelete({
+      _id: params.id,
+      userId: auth.userId // Only delete if it belongs to this user
+    });
     
     if (!medication) {
       return NextResponse.json(
@@ -118,8 +112,7 @@ export async function DELETE(
     
     return NextResponse.json({
       success: true,
-      message: 'Medication deleted successfully',
-      data: medication
+      message: 'Medication deleted successfully'
     });
     
   } catch (error: any) {

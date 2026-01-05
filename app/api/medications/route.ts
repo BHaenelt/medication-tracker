@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'; 
 import { connect } from '@/lib/dbConfig';
 import Medication from '@/models/Medication';
+import { verifyToken, unauthorizedResponse } from '../middleware/auth';
 
-// GET all medications for a user
+// GET all medications for logged-in user
 export async function GET(request: NextRequest) {
   try {
+    // Verify token and get userId
+    const auth = await verifyToken(request);
+    if (!auth) {
+      return unauthorizedResponse();
+    }
+
     await connect();
     
-    // TODO: Get userId from authentication token
-    // For now, we'll use a query parameter
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-    
-    const medications = await Medication.find({ userId, isActive: true })
-      .sort({ createdAt: -1 });
+    // Get only this user's active medications
+    const medications = await Medication.find({ 
+      userId: auth.userId, 
+      isActive: true 
+    }).sort({ createdAt: -1 });
     
     return NextResponse.json({
       success: true,
@@ -35,23 +33,30 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create a new medication
+// POST - Create a new medication for logged-in user
 export async function POST(request: NextRequest) {
   try {
+    // Verify token and get userId
+    const auth = await verifyToken(request);
+    if (!auth) {
+      return unauthorizedResponse();
+    }
+
     await connect();
     
     const body = await request.json();
-    const { userId, name, dosage, frequency, timeOfDay, instructions, startDate, endDate } = body;
+    const { name, dosage, frequency, timeOfDay, instructions, startDate, endDate } = body;
     
-    if (!userId || !name || !dosage || !frequency) {
+    if (!name || !dosage || !frequency) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, name, dosage, frequency' },
+        { error: 'Missing required fields: name, dosage, frequency' },
         { status: 400 }
       );
     }
     
+    // Create medication with logged-in user's ID
     const medication = await Medication.create({
-      userId,
+      userId: auth.userId,  // Use userId from token
       name,
       dosage,
       frequency,
