@@ -16,25 +16,38 @@ const MedicationSchema = new mongoose.Schema({
     required: [true, 'Dosage is required'],
     trim: true
   },
-  frequency: {
-    type: String,
-    required: [true, 'Frequency is required'],
-    enum: ['once daily', 'twice daily', 'three times daily', 'as needed', 'custom']
+  times: {
+    type: [String],
+    required: [true, 'At least one time is required'],
+    validate: {
+      validator: function(times: string[]) {
+        return times.length > 0 && times.every(time => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time));
+      },
+      message: 'Times must be in HH:MM format (e.g., "08:00", "14:30")'
+    }
   },
-  timeOfDay: {
-    type: [String], // Array of times like ["08:00", "20:00"]
-    default: []
+  daysOfWeek: {
+    type: [Number],
+    default: [0, 1, 2, 3, 4, 5, 6], // Default to all days (Sunday=0, Saturday=6)
+    validate: {
+      validator: function(days: number[]) {
+        return days.length > 0 && days.every(day => day >= 0 && day <= 6);
+      },
+      message: 'Days must be numbers 0-6 (Sunday=0, Saturday=6)'
+    }
   },
   instructions: {
     type: String,
-    trim: true
+    trim: true,
+    default: ''
   },
   startDate: {
     type: Date,
     default: Date.now
   },
   endDate: {
-    type: Date
+    type: Date,
+    default: null
   },
   isActive: {
     type: Boolean,

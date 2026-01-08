@@ -6,16 +6,18 @@ import { verifyToken, unauthorizedResponse } from '../../middleware/auth';
 // GET single medication
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
+    const { id } = await params;
+
     await connect();
 
     const medication = await Medication.findOne({ 
-      _id: params.id, 
+      _id: id, 
       userId: userId 
     });
 
@@ -42,18 +44,20 @@ export async function GET(
 // PUT update medication
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
+
+    const { id } = await params;
 
     await connect();
 
     const body = await request.json();
 
     const medication = await Medication.findOneAndUpdate(
-      { _id: params.id, userId: userId },
+      { _id: id, userId: userId },
       body,
       { new: true, runValidators: true }
     );
@@ -81,16 +85,18 @@ export async function PUT(
 // DELETE medication
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = await verifyToken(request);
     if (!userId) return unauthorizedResponse();
 
+    const { id } = await params;
+
     await connect();
 
     const medication = await Medication.findOneAndDelete({ 
-      _id: params.id, 
+      _id: id, 
       userId: userId 
     });
 

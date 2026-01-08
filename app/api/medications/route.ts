@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
     await connect();
     
     const body = await request.json();
-    const { name, dosage, frequency, timeOfDay, instructions, startDate, endDate } = body;
+    const { name, dosage, times, daysOfWeek, instructions, startDate, endDate } = body;
     
-    if (!name || !dosage || !frequency) {
+    if (!name || !dosage || !times || times.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: name, dosage, frequency' },
+        { error: 'Missing required fields: name, dosage, times (array of HH:MM format)' },
         { status: 400 }
       );
     }
@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
       userId: userId,
       name,
       dosage,
-      frequency,
-      timeOfDay: timeOfDay || [],
+      times,
+      daysOfWeek: daysOfWeek || [0, 1, 2, 3, 4, 5, 6],
       instructions: instructions || '',
       startDate: startDate || new Date(),
       endDate: endDate || null,
