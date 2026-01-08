@@ -106,6 +106,13 @@ export default function DashboardPage() {
   const pendingLogs = logs.filter(log => log.status === 'pending' && log.medicationId);
   const takenLogs = logs.filter(log => log.status === 'taken' && log.medicationId);
 
+  // Helper function to check if a medication is missed
+  const isMissed = (scheduledTime: string) => {
+    const scheduled = new Date(scheduledTime);
+    const now = new Date();
+    return now > scheduled;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-3xl mx-auto">
@@ -161,15 +168,28 @@ export default function DashboardPage() {
                   {pendingLogs.map((log) => (
                     <div
                       key={log._id}
-                      className="bg-white rounded-xl p-5 border border-slate-200 hover:border-indigo-300 transition-colors"
+                      className={`bg-white rounded-xl p-5 border transition-colors ${
+                        isMissed(log.scheduledTime) 
+                          ? 'border-red-300 hover:border-red-400' 
+                          : 'border-slate-200 hover:border-indigo-300'
+                      }`}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-slate-900">
-                            {log.medicationId.name}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold text-slate-900">
+                              {log.medicationId.name}
+                            </h3>
+                            {isMissed(log.scheduledTime) && (
+                              <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
+                                MISSED
+                              </span>
+                            )}
+                          </div>
                           <p className="text-slate-600 mt-0.5">{log.medicationId.dosage}</p>
-                          <p className="text-sm text-slate-500 mt-2">
+                          <p className={`text-sm mt-2 ${
+                            isMissed(log.scheduledTime) ? 'text-red-600 font-medium' : 'text-slate-500'
+                          }`}>
                             {new Date(log.scheduledTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                           </p>
                         </div>
