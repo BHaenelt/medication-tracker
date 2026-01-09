@@ -59,4 +59,11 @@ npm run dev
 
 ---
 
+## Future Enhancements
+
+- Forgot password functionality
+- Integration with external API for medication contraindication checking
+- Email/SMS notifications for upcoming doses
+- Medication refill reminders
+
 **Author**: B - Springboard Bootcamp Graduate, December 2025
